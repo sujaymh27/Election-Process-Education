@@ -1,0 +1,231 @@
+{
+  "electionInfo": {
+    "location": "Karnataka, India",
+    "type": "State Election (MLA)",
+    "note": "Note: This is demonstration data",
+    "timeline": {
+      "registrationDeadline": "2026-05-10T00:00:00Z",
+      "electionDay": "2026-05-25T00:00:00Z"
+    }
+  },
+  "constituencies": {
+    "shivamogga": {
+      "name": "Shivamogga",
+      "aliases": ["shimoga", "shivamogga", "shimo"],
+      "candidates": [
+        { "name": "Ravi Kumar", "focus": "Infrastructure & rural development" },
+        { "name": "Anil Reddy", "focus": "Healthcare & public welfare" }
+      ],
+      "pollingLocation": "Shivamogga City Corporation"
+    },
+    "bengaluru urban": {
+      "name": "Bengaluru Urban",
+      "aliases": ["bangalore", "bengaluru", "blr"],
+      "candidates": [
+        { "name": "Priya Sharma", "focus": "Education & urban planning" },
+        { "name": "Karthik Gowda", "focus": "Transport & smart city" }
+      ],
+      "pollingLocation": "BBMP Head Office, Bengaluru"
+    },
+    "mysuru": {
+      "name": "Mysuru",
+      "aliases": ["mysore", "mysuru", "mys"],
+      "candidates": [
+        { "name": "Sneha Iyer", "focus": "Tourism & culture" },
+        { "name": "Manjunath Rao", "focus": "Agriculture & local economy" }
+      ],
+      "pollingLocation": "Mysuru City Corporation"
+    },
+    "hubballi-dharwad": {
+      "name": "Hubballi-Dharwad",
+      "aliases": ["hubli", "dharwad", "hubballi"],
+      "candidates": [
+        { "name": "Suresh Angadi", "focus": "Industrial growth" },
+        { "name": "Deepa Patil", "focus": "Water management" }
+      ],
+      "pollingLocation": "HDMC Office, Hubballi"
+    },
+    "mangaluru": {
+      "name": "Mangaluru",
+      "aliases": ["mangalore", "mangaluru", "mlr"],
+      "candidates": [
+        { "name": "Vikram Shetty", "focus": "Coastal development & fisheries" },
+        { "name": "Aisha Rahman", "focus": "Education & healthcare" }
+      ],
+      "pollingLocation": "Mangaluru City Corporation"
+    },
+    "belagavi": {
+      "name": "Belagavi",
+      "aliases": ["belgaum", "belagavi"],
+      "candidates": [
+        { "name": "Rajesh Kadam", "focus": "Agriculture & border development" },
+        { "name": "Meena Deshpande", "focus": "Women empowerment" }
+      ],
+      "pollingLocation": "Belagavi City Corporation"
+    },
+    "kalaburagi": {
+      "name": "Kalaburagi",
+      "aliases": ["gulbarga", "kalaburagi"],
+      "candidates": [
+        { "name": "Mallikarjun", "focus": "Infrastructure & social justice" },
+        { "name": "Vishwanath", "focus": "Youth employment" }
+      ],
+      "pollingLocation": "Kalaburagi City Corporation"
+    },
+    "davanagere": {
+      "name": "Davanagere",
+      "aliases": ["davangere", "davanagere"],
+      "candidates": [
+        { "name": "Shamanur", "focus": "Education & industrialization" },
+        { "name": "Ramesh", "focus": "Farmer welfare" }
+      ],
+      "pollingLocation": "Davanagere City Corporation"
+    },
+    "ballari": {
+      "name": "Ballari",
+      "aliases": ["bellary", "ballari"],
+      "candidates": [
+        { "name": "Sriramulu", "focus": "Mining & regional development" },
+        { "name": "Nagaraj", "focus": "Health & sanitation" }
+      ],
+      "pollingLocation": "Ballari City Corporation"
+    },
+    "tumakuru": {
+      "name": "Tumakuru",
+      "aliases": ["tumkur", "tumakuru"],
+      "candidates": [
+        { "name": "Parameshwara", "focus": "Education & smart city" },
+        { "name": "Suresh", "focus": "Agriculture & water" }
+      ],
+      "pollingLocation": "Tumakuru City Corporation"
+    },
+    "udupi": {
+      "name": "Udupi",
+      "aliases": ["udupi", "oodupi"],
+      "candidates": [
+        { "name": "Madhwaraj", "focus": "Tourism & temple development" },
+        { "name": "Shruthi", "focus": "Fishing community welfare" }
+      ],
+      "pollingLocation": "Udupi City Municipality"
+    },
+    "kundapura": {
+      "name": "Kundapura",
+      "aliases": ["kundapur"],
+      "candidates": [
+        { "name": "Halady", "focus": "Coastal regulation & agriculture" },
+        { "name": "Pratap", "focus": "Fisheries development" }
+      ],
+      "pollingLocation": "Kundapura Taluk Office"
+    },
+    "karkala": {
+      "name": "Karkala",
+      "aliases": ["karkal"],
+      "candidates": [
+        { "name": "Sunil Kumar", "focus": "Culture & heritage tourism" },
+        { "name": "Harsha", "focus": "Rural economy" }
+      ],
+      "pollingLocation": "Karkala Taluk Panchayat"
+    },
+    "sringeri": {
+      "name": "Sringeri",
+      "aliases": ["shringeri"],
+      "candidates": [
+        { "name": "Raje Gowda", "focus": "Areca nut farmers welfare" },
+        { "name": "Venkatesh", "focus": "Eco-tourism & temple infrastructure" }
+      ],
+      "pollingLocation": "Sringeri Taluk Office"
+    },
+    "hassan": {
+      "name": "Hassan",
+      "aliases": ["hasan"],
+      "candidates": [
+        { "name": "Prajwal", "focus": "Agriculture & irrigation" },
+        { "name": "Preetham", "focus": "City infrastructure" }
+      ],
+      "pollingLocation": "Hassan City Municipal Council"
+    },
+    "tiptur": {
+      "name": "Tiptur",
+      "aliases": ["tiptoour"],
+      "candidates": [
+        { "name": "Nagesh", "focus": "Coconut farmers support" },
+        { "name": "Kiran", "focus": "Water supply" }
+      ],
+      "pollingLocation": "Tiptur Town Municipal Council"
+    },
+    "channapatna": {
+      "name": "Channapatna",
+      "aliases": ["chanapatna"],
+      "candidates": [
+        { "name": "Kumaraswamy", "focus": "Toy industry promotion" },
+        { "name": "Yogeshwar", "focus": "Lake rejuvenation" }
+      ],
+      "pollingLocation": "Channapatna Taluk Panchayat"
+    },
+    "ramanagara": {
+      "name": "Ramanagara",
+      "aliases": ["ramanagar"],
+      "candidates": [
+        { "name": "Anitha", "focus": "Silk industry development" },
+        { "name": "Iqbal", "focus": "Education & healthcare" }
+      ],
+      "pollingLocation": "Ramanagara City Municipal Council"
+    },
+    "bidar": {
+      "name": "Bidar",
+      "aliases": ["bidr"],
+      "candidates": [
+        { "name": "Rahim Khan", "focus": "Minority welfare & heritage" },
+        { "name": "Suryakanth", "focus": "Industrial estate development" }
+      ],
+      "pollingLocation": "Bidar City Municipal Council"
+    },
+    "raichur": {
+      "name": "Raichur",
+      "aliases": ["rayachur"],
+      "candidates": [
+        { "name": "Shivaraj", "focus": "Thermal power & irrigation" },
+        { "name": "Basanagouda", "focus": "Agriculture" }
+      ],
+      "pollingLocation": "Raichur City Municipal Council"
+    },
+    "koppal": {
+      "name": "Koppal",
+      "aliases": ["kopal"],
+      "candidates": [
+        { "name": "Raghavendra", "focus": "Rural infrastructure" },
+        { "name": "Karadi", "focus": "Farmers welfare" }
+      ],
+      "pollingLocation": "Koppal City Municipal Council"
+    },
+    "hosapete": {
+      "name": "Hosapete",
+      "aliases": ["hospet"],
+      "candidates": [
+        { "name": "Anand Singh", "focus": "Tourism (Hampi) & mining" },
+        { "name": "Gavali", "focus": "Employment generation" }
+      ],
+      "pollingLocation": "Hosapete City Municipal Council"
+    },
+    "madikeri": {
+      "name": "Madikeri",
+      "aliases": ["mercara", "coorg"],
+      "candidates": [
+        { "name": "Appachu", "focus": "Coffee planters welfare" },
+        { "name": "Mantara", "focus": "Eco-tourism & disaster management" }
+      ],
+      "pollingLocation": "Madikeri City Municipal Council"
+    }
+  },
+  "education": {
+    "whatIsMLA": "MLA stands for Member of Legislative Assembly. They are elected by the public to represent a constituency in the state assembly.",
+    "roleOfMLA": "The primary role of an MLA is to represent their constituents' grievances, draft and pass state laws, and oversee the state government's functioning.",
+    "steps": [
+      "Check your eligibility (Age 18+).",
+      "Register to vote in your constituency.",
+      "Research the candidates and their policies.",
+      "Find your polling station.",
+      "Cast your vote on election day."
+    ]
+  }
+}

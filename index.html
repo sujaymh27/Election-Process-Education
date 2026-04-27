@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Process Education</title>
+    <meta name="description" content="A smart assistant guiding you through the election process.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="app-header">
+        <h1>Interactive Election Assistant</h1>
+        <p class="subtitle">Understand timelines, steps, and your readiness to vote</p>
+        <div id="demo-badge" class="badge warning">Note: This is demonstration data</div>
+    </header>
+
+    <main class="container">
+        <!-- Progress Bar -->
+        <div class="progress-container" id="progress-container" style="display: none;">
+            <div class="progress-header">
+                <div class="progress-title-group">
+                    <span id="progress-text">Readiness: 0%</span>
+                    <div class="tooltip-container">
+                        <i class="fa-solid fa-circle-info info-icon"></i>
+                        <span class="tooltip-text">Readiness = User’s progress toward being fully ready to vote</span>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer-note">
+            ⚠️ This assistant uses demonstration data and simplified logic. Please verify official information from government sources like NVSP. Minor inaccuracies may occur.
+        </div>
+
+        <div id="app-content" class="card-container">
+            <!-- Dynamic Content Injected Here -->
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
