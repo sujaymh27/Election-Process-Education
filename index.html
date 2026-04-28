@@ -10,15 +10,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <header class="app-header">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header class="app-header" role="banner">
         <h1>Interactive Election Assistant</h1>
         <p class="subtitle">Understand timelines, steps, and your readiness to vote</p>
         <div id="demo-badge" class="badge warning">Note: This is demonstration data</div>
+        <button id="langToggleBtn" class="lang-toggle" onclick="setLanguage(getCurrentLang()==='en'?'kn':'en')" aria-label="Switch language between English and Kannada">
+            ಕನ್ನಡ
+        </button>
     </header>
 
-    <main class="container">
+    <main class="container" id="main-content" role="main" aria-label="Election assistant content">
         <!-- Progress Bar -->
-        <div class="progress-container" id="progress-container" style="display: none;">
+        <div class="progress-container" id="progress-container" style="display: none;"
+             role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Voter readiness score">
             <div class="progress-header">
                 <div class="progress-title-group">
                     <span id="progress-text">Readiness: 0%</span>
@@ -43,6 +48,17 @@
         </div>
     </main>
 
+    <!-- Firebase compat SDK (v9) for Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <!-- App modules (order matters) -->
+    <script src="utils.js"></script>
+    <script src="translations.js"></script>
+    <script src="gemini.js"></script>
+    <script src="firebase.js"></script>
     <script src="script.js"></script>
+    <!-- Unit tests: open browser console to see results -->
+    <script src="tests.js"></script>
 </body>
 </html>

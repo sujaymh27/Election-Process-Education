@@ -230,7 +230,97 @@ const fallbackData = {
   }
 };
 
-// State Management
+// ─── Central Validation Module ───────────────────────────────────────────────
+const Validators = {
+    /**
+     * Validates a user-supplied name.
+     * Rules: non-empty, min 2 chars, letters/spaces/hyphens only.
+     */
+    validateName(name) {
+        if (typeof name !== 'string') return { valid: false, message: 'Name must be a string.' };
+        const trimmed = name.trim();
+        if (!trimmed) return { valid: false, message: 'Please enter your name to continue.' };
+        if (trimmed.length < 2) return { valid: false, message: 'Name must be at least 2 characters.' };
+        if (!/^[a-zA-Z\s\-'.]+$/.test(trimmed)) return { valid: false, message: 'Name should only contain letters. Please remove any numbers or special characters.' };
+        return { valid: true, message: '' };
+    },
+
+    /**
+     * Validates age input.
+     * Rules: numeric, 1–100 (18+ for voting eligibility checked separately).
+     */
+    validateAge(value) {
+        const age = Number(value);
+        if (value === null || value === undefined || value === '' || isNaN(age)) {
+            return { valid: false, message: 'Please enter a valid age (numbers only).' };
+        }
+        if (!Number.isInteger(age)) {
+            return { valid: false, message: 'Age must be a whole number.' };
+        }
+        if (age <= 0) {
+            return { valid: false, message: 'Age cannot be zero or negative. Please enter a valid age.' };
+        }
+        if (age > 100) {
+            return { valid: false, message: 'Age seems too high (over 100). Please double-check your input.' };
+        }
+        return { valid: true, message: '' };
+    },
+
+    /**
+     * Validates constituency search input.
+     */
+    validateConstituencyInput(input) {
+        if (!input || !input.trim()) {
+            return { valid: false, message: 'Please enter a city or constituency name to search.' };
+        }
+        return { valid: true, message: '' };
+    }
+};
+
+// Expose Validators globally for tests.js
+window.Validators = Validators;
+
+// ─── Exposed Utilities for Testing ───────────────────────────────────────────
+/**
+ * Pure score calculation — exposed for unit testing.
+ * @param {object} state - User state object
+ * @returns {number} Score 0-100
+ */
+function calculateScore(state) {
+    if (!state) return 0;
+    let score = 0;
+    if (state.name) score += 10;
+    if (state.age >= 18) score += 10;
+    if (state.registered === 'yes') score += 30;
+    else if (state.registered !== null && state.registered !== undefined) score += 10;
+    if (state.votingMethod) score += 25;
+    if (state.constituency) score += 25;
+    return Math.min(100, score);
+}
+window.calculateScore = calculateScore;
+
+/**
+ * Finds a constituency by name or alias (case-insensitive, partial).
+ * Returns the constituency data object or null if not found.
+ * @param {string} input
+ * @returns {object|null}
+ */
+function findConstituency(input) {
+    if (!input || !input.trim() || !electionData) return null;
+    const query = input.trim().toLowerCase();
+    for (const [key, data] of Object.entries(electionData.constituencies)) {
+        const nameMatch = data.name.toLowerCase().includes(query) || key.includes(query);
+        const aliasMatch = (data.aliases || []).some(alias => alias.toLowerCase().includes(query) || query.includes(alias.toLowerCase()));
+        if (nameMatch || aliasMatch) {
+            return { key, ...data };
+        }
+    }
+    return null;
+}
+window.findConstituency = findConstituency;
+
+// Expose fallbackData so tests.js can use it before init() runs
+window.fallbackData = fallbackData;
 let electionData = null;
 let userState = {
     name: '',
@@ -253,11 +343,19 @@ async function init() {
     try {
         const response = await fetch('data.json');
         if (!response.ok) throw new Error("Failed to load data");
-        electionData = await response.json();
+        const parsed = await response.json();
+        // Safety: ensure required fields exist
+        if (!parsed || !parsed.constituencies || !parsed.electionInfo) {
+            throw new Error('Data file is missing required fields.');
+        }
+        electionData = parsed;
     } catch (error) {
-        console.warn("Using fallback data. If you are opening this file locally, this is expected.");
+        console.warn('Using fallback data:', error.message);
         electionData = fallbackData;
     }
+    // Expose for tests
+    window.electionData = electionData;
+    logEvent('app_initialized', { constituencies: Object.keys(electionData.constituencies).length });
     loadState();
     renderCurrentStep();
 }
@@ -325,20 +423,14 @@ function renderCurrentStep() {
 }
 
 function updateScore() {
-    let score = 0;
-    if (userState.name) score += 10;
-    if (userState.age >= 18) score += 10;
-    if (userState.registered === 'yes') score += 30;
-    else if (userState.registered !== null) score += 10;
-    if (userState.votingMethod) score += 25;
-    if (userState.constituency) score += 25;
+    userState.score = calculateScore(userState);
     
-    userState.score = Math.min(100, score);
-    
-    if (userState.currentStep !== 'intro' && userState.currentStep !== 'age' && userState.currentStep !== 'underage') {
+    const stepsWithProgress = ['registration', 'registration_info', 'voting_method', 'constituency', 'dashboard', 'welcome_back'];
+    if (stepsWithProgress.includes(userState.currentStep)) {
         progressContainer.style.display = 'block';
         progressFill.style.width = `${userState.score}%`;
-        progressText.innerText = `Readiness: ${userState.score}%`;
+        progressText.innerText = `${t('readiness')}: ${userState.score}%`;
+        progressFill.setAttribute('aria-valuenow', userState.score);
         
         if (userState.score < 40) progressFill.style.backgroundColor = 'var(--danger-color)';
         else if (userState.score < 80) progressFill.style.backgroundColor = 'var(--accent-color)';
@@ -350,43 +442,52 @@ function updateScore() {
 
 // Step Renders
 function renderIntro() {
-    const card = createCard('Welcome to Your Election Guide');
+    const card = createCard(t('introTitle'));
     card.innerHTML += `
-        <p>This assistant will guide you step-by-step through the election process. Let's start with your name.</p>
+        <p>${t('introDesc')}</p>
         <div class="input-group">
-            <label for="userName">Your First Name</label>
-            <input type="text" id="userName" placeholder="e.g., Ramesh" autocomplete="given-name">
+            <label for="userName">${t('labelName')}</label>
+            <input type="text" id="userName" placeholder="${t('namePlaceholder')}" autocomplete="given-name"
+                aria-label="${t('labelName')}" aria-required="true">
+            <span class="field-error" id="nameError" role="alert" aria-live="polite"></span>
         </div>
-        <button id="btnNext" aria-label="Next step">Continue</button>
+        <button id="btnNext" aria-label="${t('btnContinue')}">${t('btnContinue')}</button>
     `;
     appContent.appendChild(card);
-    
+
+    const nameInput = document.getElementById('userName');
+    const nameError = document.getElementById('nameError');
+    nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('btnNext').click(); });
+
     document.getElementById('btnNext').addEventListener('click', () => {
-        const name = document.getElementById('userName').value.trim();
-        if (name) {
-            userState.name = name;
-            userState.currentStep = 'age';
-            saveState();
-            renderCurrentStep();
-        } else {
-            alert("Please enter your name to continue.");
+        const result = Validators.validateName(nameInput.value);
+        if (!result.valid) {
+            nameError.textContent = result.message;
+            nameInput.setAttribute('aria-invalid', 'true');
+            nameInput.focus();
+            return;
         }
+        nameError.textContent = '';
+        nameInput.removeAttribute('aria-invalid');
+        userState.name = sanitizeText(nameInput.value);
+        userState.currentStep = 'age';
+        logEvent('step_name_complete', { nameLength: userState.name.length });
+        saveState();
+        renderCurrentStep();
     });
 }
 
 function renderWelcomeBack() {
-    const card = createCard(`Welcome back, ${userState.name}!`);
+    const card = createCard(t('welcomeBackTitle', { name: userState.name }));
     card.innerHTML += `
-        <p>Let's continue your election preparation journey.</p>
+        <p>${t('welcomeBackDesc')}</p>
         <div class="btn-group">
-            <button id="btnContinue">Continue Journey</button>
-            <button id="btnRestart" class="outline">Start Over</button>
+            <button id="btnContinue">${t('btnContinueJourney')}</button>
+            <button id="btnRestart" class="outline">${t('btnStartOver')}</button>
         </div>
     `;
     appContent.appendChild(card);
-    
     updateScore();
-    
     document.getElementById('btnContinue').addEventListener('click', () => {
         if(!userState.age) userState.currentStep = 'age';
         else if(userState.registered === null) userState.currentStep = 'registration';
@@ -395,36 +496,47 @@ function renderWelcomeBack() {
         else userState.currentStep = 'dashboard';
         renderCurrentStep();
     });
-    
     document.getElementById('btnRestart').addEventListener('click', clearState);
 }
 
 function renderAge() {
-    const card = createCard(`Nice to meet you, ${userState.name}!`);
+    const card = createCard(t('ageTitle', { name: userState.name }));
     card.innerHTML += `
-        <p>To give you the right information, please tell us your age.</p>
+        <p>${t('ageDesc')}</p>
         <div class="input-group">
-            <label for="userAge">Your Age</label>
-            <input type="number" id="userAge" placeholder="e.g., 25" min="1" max="120">
+            <label for="userAge">${t('labelAge')}</label>
+            <input type="number" id="userAge" placeholder="${t('agePlaceholder')}" min="1" max="100"
+                aria-label="${t('labelAge')}" aria-required="true">
+            <span class="field-error" id="ageError" role="alert" aria-live="polite"></span>
         </div>
-        <button id="btnNext">Continue</button>
+        <button id="btnNext" aria-label="${t('btnContinue')}">${t('btnContinue')}</button>
     `;
     appContent.appendChild(card);
-    
+
+    const ageInput = document.getElementById('userAge');
+    const ageError = document.getElementById('ageError');
+    ageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('btnNext').click(); });
+
     document.getElementById('btnNext').addEventListener('click', () => {
-        const age = parseInt(document.getElementById('userAge').value, 10);
-        if (age && age > 0) {
-            userState.age = age;
-            if (age < 18) {
-                userState.currentStep = 'underage';
-            } else {
-                userState.currentStep = 'registration';
-                saveState();
-            }
-            renderCurrentStep();
-        } else {
-            alert("Please enter a valid age.");
+        const rawVal = ageInput.value;
+        const result = Validators.validateAge(rawVal === '' ? NaN : Number(rawVal));
+        if (!result.valid) {
+            ageError.textContent = result.message;
+            ageInput.setAttribute('aria-invalid', 'true');
+            ageInput.focus();
+            return;
         }
+        ageError.textContent = '';
+        ageInput.removeAttribute('aria-invalid');
+        const age = parseInt(rawVal, 10);
+        userState.age = age;
+        if (age < 18) {
+            userState.currentStep = 'underage';
+        } else {
+            userState.currentStep = 'registration';
+            saveState();
+        }
+        renderCurrentStep();
     });
 }
 
@@ -464,45 +576,37 @@ function renderUnderage() {
 
 function renderRegistration() {
     updateScore();
-    const card = createCard(`${userState.name}, your next step is Voter Registration`);
+    const card = createCard(t('registrationTitle', { name: userState.name }));
     card.innerHTML += `
-        <p>Are you currently registered to vote at your current address?</p>
+        <p>${t('registrationDesc')}</p>
         <div class="btn-group">
-            <button id="btnYes">Yes, I am registered</button>
-            <button id="btnNo" class="secondary">No, I need to register</button>
-            <button id="btnNotSure" class="outline">I'm not sure</button>
+            <button id="btnYes">${t('btnYes')}</button>
+            <button id="btnNo" class="secondary">${t('btnNo')}</button>
+            <button id="btnNotSure" class="outline">${t('btnNotSure')}</button>
         </div>
     `;
     appContent.appendChild(card);
-    
+
     document.getElementById('btnYes').addEventListener('click', () => {
-        userState.registered = 'yes';
-        userState.currentStep = 'voting_method';
-        saveState();
-        renderCurrentStep();
+        userState.registered = 'yes'; userState.currentStep = 'voting_method';
+        saveState(); renderCurrentStep();
     });
-    
     document.getElementById('btnNo').addEventListener('click', () => {
-        userState.registered = 'no';
-        userState.currentStep = 'registration_info';
-        saveState();
-        renderCurrentStep();
+        userState.registered = 'no'; userState.currentStep = 'registration_info';
+        saveState(); renderCurrentStep();
     });
-    
     document.getElementById('btnNotSure').addEventListener('click', () => {
-        userState.registered = 'notsure';
-        userState.currentStep = 'registration_info';
-        saveState();
-        renderCurrentStep();
+        userState.registered = 'notsure'; userState.currentStep = 'registration_info';
+        saveState(); renderCurrentStep();
     });
 }
 
 function renderRegistrationInfo() {
     const card = createCard('Registration Information');
     
-    // Calculate urgency
+    // Calculate urgency using real current date
     const deadline = new Date(electionData.electionInfo.timeline.registrationDeadline);
-    const today = new Date('2026-05-05'); // Simulated current date for demo purposes
+    const today = new Date(); // Dynamic — always uses real current date
     const daysLeft = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
     
     let urgencyClass = 'urgency-green';
@@ -554,24 +658,26 @@ function renderRegistrationInfo() {
 
 function renderVotingMethod() {
     updateScore();
-    const card = createCard('How do you plan to vote?');
+    const card = createCard(t('votingMethodTitle'));
     card.innerHTML += `
-        <p>${userState.name}, select your preferred voting method so we can guide you.</p>
-        <div class="btn-group" style="flex-direction: column;">
-            <button class="method-btn" data-method="in-person">
-                <strong>In-Person Voting</strong>
+        <p>${t('votingMethodDesc', { name: escapeHTML(userState.name) })}</p>
+        <div class="btn-group" style="flex-direction: column;" role="group" aria-label="Voting method options">
+            <button class="method-btn" data-method="in-person" aria-label="${t('inPerson')}">
+                <strong>${t('inPerson')}</strong>
+                <span class="helper-text">${t('inPersonDesc')}</span>
             </button>
-            <button class="method-btn" data-method="mail">
-                <strong>Postal Ballot</strong>
-                <span class="helper-text">Postal ballot is available only for specific eligible categories.</span>
+            <button class="method-btn" data-method="mail" aria-label="${t('postalBallot')}">
+                <strong>${t('postalBallot')}</strong>
+                <span class="helper-text">${t('postalBallotDesc')}</span>
             </button>
         </div>
     `;
     appContent.appendChild(card);
-    
+
     document.querySelectorAll('.method-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const el = e.target.closest('button');
+            if (!el) return;
             userState.votingMethod = el.getAttribute('data-method');
             userState.currentStep = 'constituency';
             saveState();
@@ -582,15 +688,15 @@ function renderVotingMethod() {
 
 function renderConstituency() {
     updateScore();
-    const card = createCard('Find Your Constituency');
+    const card = createCard(t('constituencyTitle'));
     card.innerHTML += `
-        <p>${userState.name}, enter your city or constituency name to see the candidates.</p>
-        <p style="font-size: 0.9em; color: var(--text-light);">Try: Shivamogga, Bengaluru, or Mysuru</p>
+        <p>${t('constituencyDesc', { name: escapeHTML(userState.name) })}</p>
+        <p style="font-size: 0.9em; color: var(--text-light);">${t('constituencyHint')}</p>
         <div class="input-group" style="position: relative;">
             <input type="text" id="constituencyInput" placeholder="Enter constituency name" autocomplete="off">
             <div id="autocompleteList" class="autocomplete-items"></div>
         </div>
-        <button id="btnSearch">Search</button>
+        <button id="btnSearch" aria-label="${t('btnSearch')}">${t('btnSearch')}</button>
         <div id="searchResults" style="margin-top: 1rem;"></div>
     `;
     appContent.appendChild(card);
@@ -598,39 +704,48 @@ function renderConstituency() {
     const input = document.getElementById('constituencyInput');
     const autocompleteList = document.getElementById('autocompleteList');
 
-    input.addEventListener('input', function() {
-        const val = this.value.toLowerCase();
+    // Debounced autocomplete — avoids excessive DOM updates on every keystroke
+    const handleAutocomplete = debounce(function() {
+        const val = input.value.toLowerCase();
         autocompleteList.innerHTML = '';
-        if (!val) { return false; }
-        
+        if (!val) { return; }
+
         for (const [key, data] of Object.entries(electionData.constituencies)) {
-            // Check if any alias or name starts with the input value
             let match = false;
             let displayStr = data.name;
-
             if (data.name.toLowerCase().startsWith(val)) {
-                 match = true;
+                match = true;
             } else if (data.aliases) {
-                 for(let alias of data.aliases) {
-                     if(alias.toLowerCase().startsWith(val)) {
-                         match = true;
-                         displayStr = data.name + " (" + alias + ")";
-                         break;
-                     }
-                 }
+                for (let alias of data.aliases) {
+                    if (alias.toLowerCase().startsWith(val)) {
+                        match = true;
+                        displayStr = data.name + ' (' + alias + ')';
+                        break;
+                    }
+                }
             }
-
             if (match) {
                 const item = document.createElement('div');
-                item.innerHTML = `<strong>${displayStr.substr(0, val.length)}</strong>${displayStr.substr(val.length)}`;
-                item.addEventListener('click', function() {
+                item.textContent = displayStr;
+                item.setAttribute('role', 'option');
+                item.addEventListener('click', function () {
                     input.value = data.name;
                     autocompleteList.innerHTML = '';
                 });
                 autocompleteList.appendChild(item);
             }
         }
-    });
+    }, 250);
+
+    input.addEventListener('input', handleAutocomplete);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('btnSearch').click(); });
+
+    // Placeholder so the old loop below doesn't re-run
+    if (false) { const val = '';
+        autocompleteList.innerHTML = '';
+        if (!val) { return false; }
+        
+        } // end if(false) placeholder
 
     // Close autocomplete if clicked outside
     document.addEventListener('click', function (e) {
@@ -640,39 +755,31 @@ function renderConstituency() {
     });
     
     document.getElementById('btnSearch').addEventListener('click', () => {
-        const input = document.getElementById('constituencyInput').value.trim().toLowerCase();
+        const rawInput = document.getElementById('constituencyInput').value.trim();
         const resultsContainer = document.getElementById('searchResults');
-        
-        if (!input) {
-            resultsContainer.innerHTML = '<p class="urgency-red">Please enter a location.</p>';
+
+        // Validate input
+        const inputCheck = Validators.validateConstituencyInput(rawInput);
+        if (!inputCheck.valid) {
+            resultsContainer.innerHTML = `<p class="field-error" role="alert">${inputCheck.message}</p>`;
             return;
         }
-        
-        let match = null;
-        let matchKey = null;
-        
-        // Alias and partial matching
-        for (const [key, data] of Object.entries(electionData.constituencies)) {
-            const isMatch = (data.aliases || []).some(alias => alias.includes(input) || input.includes(alias)) || key.includes(input);
-            if (isMatch) {
-                match = data;
-                matchKey = key;
-                break;
-            }
-        }
-        
+
+        const match = findConstituency(rawInput);
+
         if (match) {
-            userState.constituency = matchKey;
-            
-            let candidatesHtml = match.candidates.map(c => `
+            const { key, ...data } = match;
+            userState.constituency = key;
+
+            const candidatesHtml = (data.candidates || []).map(c => `
                 <div class="candidate-card">
-                    <h4>${c.name}</h4>
-                    <p>Focus: ${c.focus}</p>
+                    <h4>${c.name || 'Unknown Candidate'}</h4>
+                    <p>Focus: ${c.focus || 'Not specified'}</p>
                 </div>
             `).join('');
-            
+
             resultsContainer.innerHTML = `
-                <h3>Found: ${match.name}</h3>
+                <h3>Found: ${data.name}</h3>
                 <div class="candidate-grid">
                     ${candidatesHtml}
                 </div>
@@ -686,25 +793,23 @@ function renderConstituency() {
                     </ul>
                     <p style="margin-top: 0.5rem; font-style: italic; font-size: 0.9em;">This information is provided to help you make your own informed decision.</p>
                 </div>
-                <button id="btnFinish" style="margin-top: 1rem;">View My Dashboard</button>
+                <button id="btnFinish" style="margin-top: 1rem;">${t('btnViewDashboard')}</button>
             `;
-            
+            saveState();
             document.getElementById('btnFinish').addEventListener('click', () => {
                 userState.currentStep = 'dashboard';
                 saveState();
                 renderCurrentStep();
             });
         } else {
-            // Show closest / fallback
+            // No match — show clear message, do NOT auto-redirect
             resultsContainer.innerHTML = `
-                <p>No exact match found for "${input}". Showing default: Bengaluru Urban</p>
+                <div class="no-match-msg" role="alert">
+                    <p>⚠️ ${t('noMatchTitle')}: <strong>"${escapeHTML(rawInput)}"</strong>.</p>
+                    <p>${t('noMatchSuggestions')}.</p>
+                    <p style="font-size:0.9em; color: var(--text-light);">${t('noMatchTip')}</p>
+                </div>
             `;
-            userState.constituency = 'bengaluru urban';
-            setTimeout(() => {
-                userState.currentStep = 'dashboard';
-                saveState();
-                renderCurrentStep();
-            }, 2000);
         }
     });
 }
@@ -714,7 +819,7 @@ function renderDashboard() {
     appContent.innerHTML = ''; // Clear container
     
     // Timeline Card
-    const timelineCard = createCard('Election Timeline');
+    const timelineCard = createCard(t('timelineTitle'));
     let timelineHtml = `<p class="badge warning" style="margin-bottom: 1rem;">${electionData.electionInfo.note}</p>`;
     
     const dates = {
@@ -739,20 +844,20 @@ function renderDashboard() {
     
     timelineHtml += `
         <a href="${calUrl}" target="_blank" style="text-decoration: none;">
-            <button class="secondary">Add to Google Calendar</button>
+            <button class="secondary">${t('addToCalendar')}</button>
         </a>
     `;
     timelineCard.innerHTML += timelineHtml;
     appContent.appendChild(timelineCard);
 
     // Checklist Card
-    const checklistCard = createCard('Your Readiness Checklist');
+    const checklistCard = createCard(t('checklistTitle'));
     checklistCard.innerHTML += `
-        <p>${userState.name}, here is your current status:</p>
+        <p>${escapeHTML(userState.name)}, here is your current status:</p>
         <ul class="checklist">
-            <li class="${userState.registered === 'yes' ? 'done' : 'pending'}">Registration Status: ${userState.registered === 'yes' ? 'Registered' : 'Needs Action'}</li>
-            <li class="${userState.votingMethod ? 'done' : 'pending'}">Voting Method: ${userState.votingMethod || 'Not selected'}</li>
-            <li class="${userState.constituency ? 'done' : 'pending'}">Constituency: ${userState.constituency ? electionData.constituencies[userState.constituency].name : 'Not selected'}</li>
+            <li class="${userState.registered === 'yes' ? 'done' : 'pending'}">${t('statusRegistered')}: ${userState.registered === 'yes' ? t('regYes') : t('regNo')}</li>
+            <li class="${userState.votingMethod ? 'done' : 'pending'}">${t('votingMethodLabel')}: ${userState.votingMethod || t('notSelected')}</li>
+            <li class="${userState.constituency ? 'done' : 'pending'}">${t('constituencyLabel')}: ${userState.constituency ? electionData.constituencies[userState.constituency].name : t('notSelected')}</li>
         </ul>
     `;
     appContent.appendChild(checklistCard);
@@ -760,14 +865,12 @@ function renderDashboard() {
     // Next Steps & Location
     if (userState.constituency) {
         const cData = electionData.constituencies[userState.constituency];
-        const locCard = createCard('Polling Location');
+        const locCard = createCard(t('pollingTitle'));
         
-        let methodText = "";
-        if(userState.votingMethod === 'in-person') methodText = "You plan to vote in person.";
-        else methodText = "You plan to vote via postal ballot.";
+        let methodText = userState.votingMethod === 'in-person' ? t('inPersonPlan') : t('postalPlan');
 
         locCard.innerHTML += `
-            <p><strong>${userState.name}, your next step:</strong> Prepare your Voter ID for election day.</p>
+            <p><strong>${t('nextStepMsg', { name: escapeHTML(userState.name) })}</strong></p>
             <p>${methodText}</p>
             <p>Your designated polling location is: <strong>${cData.pollingLocation}</strong></p>
             <div class="map-container">
@@ -788,17 +891,122 @@ function renderDashboard() {
     const resetCard = document.createElement('div');
     resetCard.style.textAlign = 'center';
     resetCard.style.marginTop = '2rem';
-    resetCard.innerHTML = `<button id="btnFinalReset" class="outline">Start Over</button>`;
+    resetCard.innerHTML = `<button id="btnFinalReset" class="outline">${t('btnFinalReset')}</button>`;
     appContent.appendChild(resetCard);
     document.getElementById('btnFinalReset').addEventListener('click', clearState);
+
+    // ── Google Services Integration ──────────────────────────────
+    // Save readiness data to Firebase Firestore
+    saveUserData({
+        name:         userState.name,
+        score:        userState.score,
+        constituency: userState.constituency,
+        votingMethod: userState.votingMethod,
+        registered:   userState.registered
+    });
+
+    // Render AI assistant section
+    renderAISection();
+
+    logEvent('dashboard_viewed', { score: userState.score, constituency: userState.constituency });
+}
+
+// ─── Gemini AI Section ───────────────────────────────────────────────────────
+function renderAISection() {
+    const card = createCard(t('aiTitle'));
+    card.innerHTML += `
+        <p>${t('aiDesc', { name: escapeHTML(userState.name) })}</p>
+        <p style="font-size:0.88em;color:var(--text-light);">${t('aiHint')}</p>
+        <div class="input-group">
+            <label for="aiQuestion">${t('labelQuestion')}</label>
+            <input type="text" id="aiQuestion" placeholder="${t('questionPlaceholder')}"
+                aria-label="${t('labelQuestion')}" aria-required="true" maxlength="300">
+            <span class="field-error" id="aiError" role="alert" aria-live="polite"></span>
+        </div>
+        <button id="btnAskAI" aria-label="${t('btnAskAI')}">
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>&nbsp;${t('btnAskAI')}
+        </button>
+        <div id="aiResponse" style="margin-top:1.5rem;" aria-live="polite" aria-label="AI response area"></div>
+    `;
+    appContent.appendChild(card);
+
+    const qInput  = document.getElementById('aiQuestion');
+    const aiError = document.getElementById('aiError');
+    const aiResp  = document.getElementById('aiResponse');
+    const askBtn  = document.getElementById('btnAskAI');
+
+    qInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') askBtn.click(); });
+
+    askBtn.addEventListener('click', async () => {
+        const question = qInput.value.trim();
+        if (!question) {
+            aiError.textContent = t('errAIEmpty');
+            qInput.setAttribute('aria-invalid', 'true');
+            qInput.focus();
+            return;
+        }
+        aiError.textContent = '';
+        qInput.removeAttribute('aria-invalid');
+
+        askBtn.disabled = true;
+        askBtn.setAttribute('aria-busy', 'true');
+        aiResp.innerHTML = createSpinner('Asking Gemini AI...');
+        logEvent('gemini_query', { question: question.substring(0, 60) });
+
+        try {
+            // getElectionAnswer: tries Gemini first, falls back to FAQ cache
+            const result = await getElectionAnswer(question);
+
+            // Convert basic markdown (**bold**, bullet •) to safe HTML
+            const formatted = escapeHTML(result.text)
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/^(•|\-)\s+/gm, '&#8226; ')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>');
+
+            const isGemini = result.source === 'gemini';
+            const badge = isGemini
+                ? `<span class="ai-source-badge gemini-badge"><i class="fa-solid fa-robot" aria-hidden="true"></i> Gemini AI</span>`
+                : `<span class="ai-source-badge faq-badge"><i class="fa-solid fa-book" aria-hidden="true"></i> Election FAQ</span>`;
+
+            aiResp.innerHTML = `
+                <div class="ai-response-box">
+                    <div class="ai-response-header">
+                        ${badge}
+                        <strong>${isGemini ? 'AI Response' : 'Quick Answer'}</strong>
+                    </div>
+                    <div class="ai-response-text"><p>${formatted}</p></div>
+                    <p class="ai-disclaimer">⚠️ Verify important details with <a href="https://www.nvsp.in" target="_blank" rel="noopener">NVSP</a> or <a href="https://eci.gov.in" target="_blank" rel="noopener">ECI</a>.</p>
+                </div>`;
+            logEvent(isGemini ? 'gemini_success' : 'faq_answer_shown');
+        } catch (err) {
+            const isRateLimit = err.message && err.message.toLowerCase().includes('rate limit');
+            aiResp.innerHTML = `
+                <div class="no-match-msg" role="alert">
+                    <p>⚠️ ${escapeHTML(err.message || 'Could not get a response.')}</p>
+                    <p style="font-size:0.9em;">${isRateLimit
+                        ? 'Please wait 30–60 seconds and try again, or try one of: "What does an MLA do?", "What is NOTA?", "How to vote?"'
+                        : 'Check your API key in <code>gemini.js</code> or try again later.'
+                    }</p>
+                </div>`;
+            logEvent('gemini_error', { error: err.message });
+        } finally {
+            askBtn.disabled = false;
+            askBtn.removeAttribute('aria-busy');
+        }
+    });
 }
 
 // Helpers
 function formatDate(dateString) {
+    if (dateString === null || dateString === undefined) return 'Date not available';
     const d = new Date(dateString);
-    if (isNaN(d)) return dateString;
+    if (isNaN(d.getTime())) return 'Invalid date';
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
+// Expose for unit testing
+window.formatDate = formatDate;
+window.electionData = null; // will be set after init()
 
 function createCard(title) {
     const card = document.createElement('div');

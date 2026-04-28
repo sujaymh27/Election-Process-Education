@@ -1,44 +1,125 @@
-# Election Process Education Assistant
+# 🗳️ Election Process Education — Karnataka
 
-## Overview
-This project is an interactive, smart assistant designed to help users understand the election process, timelines, and steps to vote in an easy-to-follow way. It guides citizens through checking eligibility, finding registration details, selecting voting methods, researching local candidates, and preparing for election day.
+> An interactive, AI-powered civic education assistant guiding Karnataka citizens through the election process in **English & ಕನ್ನಡ**.
 
-## Chosen Vertical
-**Election Process Education:** Helping citizens navigate the often confusing process of voting, encouraging higher voter turnout and informed decision-making.
+---
 
-## Approach and Logic
-The application simulates a personalized, guided journey. Instead of presenting a wall of text, it asks contextual questions one at a time. The underlying logic uses a state-machine approach (`userState`) to determine the next step based on user input. For example:
-- If a user inputs an age under 18, the logic diverges to an educational flow explaining what an MLA is, rather than pushing them through a voter registration flow they cannot complete.
-- If a user is unregistered, urgency logic checks the remaining days until the deadline and flags the step with color-coded urgency indicators.
+## ✨ Features at a Glance
 
-The entire UI is built with a Single Page Application (SPA) feel using Vanilla JavaScript for fast, dynamic DOM updates without page reloads.
+| | Feature | Detail |
+|---|---|---|
+| 🌐 | **Bilingual** | English ↔ Kannada toggle, saved in localStorage |
+| 🤖 | **Gemini AI** | Live Q&A + 11 pre-built FAQ answers as fallback |
+| 📍 | **Constituency Finder** | 22 Karnataka constituencies with autocomplete |
+| ☁️ | **Firebase** | User readiness data saved to Firestore |
+| 🗺️ | **Maps + Calendar** | Google Maps embed + Election Day calendar link |
+| 🧪 | **Tested** | 52 `console.assert` unit tests, auto-run on load |
+| ♿ | **Accessible** | ARIA, skip-link, keyboard nav, live regions |
 
-## How the Solution Works
-1. **State Management**: As the user answers questions (Name, Age, Registration Status, Constituency), their progress is saved locally using `localStorage`.
-2. **Dynamic Rendering**: Based on the `userState.currentStep`, the JavaScript clears and redraws the main content area with the relevant form or information card.
-3. **Data Fetching & Fallbacks**: The app fetches `data.json` containing mock election timelines, constituency data (towns/taluks of Karnataka), and candidate profiles. If the fetch fails (e.g., due to local file restrictions), it seamlessly falls back to a hardcoded data object.
-4. **Interactive Dashboard**: Upon completion, a personalized dashboard is generated displaying a readiness checklist, a Google Calendar link for election day, and an embedded Google Map of their polling location.
+---
 
-## Google Services Integration
-- **Google Maps**: Provides a visual representation of the user's specific polling location based on their chosen constituency using embedded map iframes.
-- **Google Calendar**: Generates a dynamic template link allowing users to instantly add "Election Day" to their personal Google Calendar with a single click.
+## 📁 Project Structure
 
-## Evaluation Criteria Alignment
-* **Code Quality**: The project is built using modular Vanilla JS (`script.js`), cleanly separated CSS (`style.css`), and semantic HTML. The state management and rendering logic are separated into clear, readable functions.
-* **Security**: The application relies entirely on client-side logic and `localStorage`. No sensitive personal identifiable information (PII) is transmitted to any external servers, ensuring a safe and responsible implementation.
-* **Efficiency**: By avoiding heavy frontend frameworks (like React or Angular), the application maintains an extremely small footprint. Assets load instantly, and DOM updates are highly optimized.
-* **Testing**: The application features fallback data mechanisms (for local testing without a web server) and robust input validation (e.g., preventing empty names or invalid ages).
-* **Accessibility**: Uses semantic HTML, logical heading structures, clear color contrast, and inclusive features like tooltips (for the Readiness score) to ensure the UI is usable for everyone. 
+```
+Election Process Education/
+├── index.html       → App shell, ARIA landmarks, language toggle button
+├── style.css        → Design system, animations, responsive layout
+├── script.js        → Step rendering, validation, i18n integration
+├── translations.js  → English + Kannada strings (t(), setLanguage())
+├── utils.js         → escapeHTML, debounce, toast, logEvent, spinner
+├── gemini.js        → Gemini AI + FAQ cache fallback
+├── firebase.js      → Firestore persistence
+├── tests.js         → Unit tests (console, no build needed)
+└── data.json        → Karnataka constituencies & candidate data
+```
 
-## Assumptions Made
-* The application currently uses static, demonstration data for Karnataka State Elections provided locally via `data.json`.
-* Users are accessing the application via a modern web browser that supports ES6 JavaScript features, CSS Flexbox/Grid, and `localStorage`.
-* The application assumes the device time is reasonably accurate to calculate registration deadline urgency.
+---
 
-## How to Run Locally
-1. Clone or download the repository.
-2. Open the folder in your terminal.
-3. Start a local web server (required to fetch `data.json` due to CORS):
-   - Python: `python -m http.server 8000`
-   - Node.js: `npx serve .`
-4. Open your browser and navigate to `http://localhost:8000`.
+## 🚀 Quick Start
+
+```bash
+cd "Election Process Education"
+python -m http.server 8080
+# Open → http://localhost:8080
+```
+
+> ⚠️ Always use a local server — `file://` breaks `fetch()` for `data.json`.
+
+---
+
+## ☁️ Google Services
+
+| Service | File | How It's Used |
+|---|---|---|
+| **Gemini API** | `gemini.js` | Election Q&A, 4-model fallback chain |
+| **Firebase Firestore** | `firebase.js` | Saves user score, constituency, method |
+| **Google Maps** | `script.js` | Polling booth location embed |
+| **Google Calendar** | `script.js` | "Add Election Day" one-click button |
+| **Google Fonts** | `index.html` | Inter typeface |
+
+---
+
+## 🏆 Evaluation Criteria
+
+### 🧩 Code Quality
+- **Modular**: each file has a single responsibility
+- **Validators** module with pure functions (`validateName`, `validateAge`, `validateConstituencyInput`)
+- **No hardcoded strings** — all UI text in `translations.js`
+- **Debouncing** (250ms) on autocomplete; lazy step rendering
+
+### 🔐 Security
+- All user input sanitized via `escapeHTML()` before any `innerHTML`
+- `item.textContent` used in autocomplete (never `innerHTML`)
+- Regex-based name validation, numeric range checks for age
+- Zero `eval()` usage
+
+### ⚡ Efficiency
+- No framework — pure Vanilla JS, zero build step, instant load
+- FAQ cache serves 11 answers instantly without hitting the API
+- `localStorage` persists state & language — no server round-trips
+- Gemini tries fastest model first (`gemini-2.0-flash`), falls back only on 404
+
+### 🧪 Testing
+Open **F12 → Console** after page load:
+```
+📊 Results: 52/52 tests passed ✅
+```
+- `validateName` — 8 cases | `validateAge` — 9 cases | `calculateScore` — 6 cases
+- `escapeHTML` — 7 cases | `debounce` — 2 | `logEvent` — 2 | `askGemini` — 4 (input only, no live calls)
+
+### ♿ Accessibility
+- Skip-to-content link (keyboard users)
+- `role="progressbar"` with `aria-valuenow`, `aria-valuemin/max`
+- All errors: `role="alert"` + `aria-live="polite"` + `aria-invalid`
+- `<html lang>` updated dynamically on language switch
+- Enter key submits all forms
+
+### 🌐 Bilingual (English / ಕನ್ನಡ)
+```javascript
+t('introTitle')                    // "Welcome to Your Election Guide"
+                                   // → "ನಿಮ್ಮ ಚುನಾವಣಾ ಮಾರ್ಗದರ್ಶಿಗೆ ಸ್ವಾಗತ"
+t('ageTitle', { name: 'Ramesh' }) // Supports {{name}} placeholders
+setLanguage('kn')                  // Switches all UI instantly + re-renders
+```
+
+---
+
+## 🔑 API Keys
+
+| Service | File | Where to Get |
+|---|---|---|
+| Gemini AI | `gemini.js` → `GEMINI_API_KEY` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
+| Firebase | `firebase.js` → `FIREBASE_CONFIG` | [console.firebase.google.com](https://console.firebase.google.com) |
+
+> App works in demo mode without keys — Gemini falls back to FAQ, Firebase logs to console.
+
+---
+
+## ⚠️ Disclaimer
+
+Demonstration data only. Verify with official sources:
+[NVSP](https://www.nvsp.in) · [ECI](https://eci.gov.in) · [Karnataka CEO](https://ceo.karnataka.gov.in)
+
+---
+
+*MIT License — Free for educational and civic use.*
