@@ -22,15 +22,22 @@
 
 ```
 Election Process Education/
-├── index.html       → App shell, ARIA landmarks, language toggle button
-├── style.css        → Design system, animations, responsive layout
-├── script.js        → Step rendering, validation, i18n integration
-├── translations.js  → English + Kannada strings (t(), setLanguage())
-├── utils.js         → escapeHTML, debounce, toast, logEvent, spinner
-├── gemini.js        → Gemini AI + FAQ cache fallback
-├── firebase.js      → Firestore persistence
-├── tests.js         → Unit tests (console, no build needed)
-└── data.json        → Karnataka constituencies & candidate data
+│
+├── 📄 index.html        → App shell, ARIA landmarks, language toggle
+├── 🎨 style.css         → Design system, animations, responsive layout
+│
+├── 🧠 Core Logic
+│   ├── script.js        → Step rendering, validation, i18n integration
+│   ├── translations.js  → English + Kannada strings — t(), setLanguage()
+│   └── utils.js         → escapeHTML, debounce, toast, logEvent, spinner
+│
+├── ☁️  Google Services
+│   ├── gemini.js        → Gemini AI Q&A + FAQ cache fallback
+│   └── firebase.js      → Firestore user data persistence
+│
+├── 🧪 tests.js          → 52 unit tests, auto-runs in browser console
+├── 📊 data.json         → Karnataka constituencies & candidate data
+└── 📘 README.md         → Project documentation
 ```
 
 ---
@@ -122,4 +129,6 @@ Demonstration data only. Verify with official sources:
 
 ---
 
-*MIT License — Free for educational and civic use.*
+> 📚 **For Educational & Civic Awareness Purposes Only.**
+> This project was built to help citizens understand the Indian election process.
+> Not affiliated with or endorsed by the Election Commission of India.
