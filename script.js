@@ -886,17 +886,8 @@ function renderDashboard() {
         `;
         appContent.appendChild(locCard);
     }
-    
-    // Start Over
-    const resetCard = document.createElement('div');
-    resetCard.style.textAlign = 'center';
-    resetCard.style.marginTop = '2rem';
-    resetCard.innerHTML = `<button id="btnFinalReset" class="outline">${t('btnFinalReset')}</button>`;
-    appContent.appendChild(resetCard);
-    document.getElementById('btnFinalReset').addEventListener('click', clearState);
 
     // ── Google Services Integration ──────────────────────────────
-    // Save readiness data to Firebase Firestore
     saveUserData({
         name:         userState.name,
         score:        userState.score,
@@ -907,6 +898,15 @@ function renderDashboard() {
 
     // Render AI assistant section
     renderAISection();
+
+    // Start Over — always last on the dashboard
+    const resetCard = document.createElement('div');
+    resetCard.style.textAlign = 'center';
+    resetCard.style.marginTop = '2rem';
+    resetCard.style.marginBottom = '1rem';
+    resetCard.innerHTML = `<button id="btnFinalReset" class="outline" style="max-width:220px;">${t('btnFinalReset')}</button>`;
+    appContent.appendChild(resetCard);
+    document.getElementById('btnFinalReset').addEventListener('click', clearState);
 
     logEvent('dashboard_viewed', { score: userState.score, constituency: userState.constituency });
 }
