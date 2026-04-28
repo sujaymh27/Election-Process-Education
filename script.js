@@ -388,6 +388,7 @@ function clearState() {
 // Core Render Logic
 function renderCurrentStep() {
     appContent.innerHTML = ''; // Clear current
+    window.scrollTo({ top: 0, behavior: 'instant' }); // Always start from top
     
     switch (userState.currentStep) {
         case 'intro':

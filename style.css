@@ -695,151 +695,153 @@ input[aria-invalid="true"] {
 button[aria-busy="true"] {
     opacity: 0.7;
     cursor: not-allowed;
-}
-
-/* ── Responsive / Mobile ────────────────────────────────────────────────── */
+}/* ── Responsive / Mobile ────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-    /* Header */
+
+    /* Header — compact, no wasted space */
     .app-header {
         clip-path: none;
-        padding: 1.5rem 1rem 3rem;
+        padding: 1rem 1rem 2.5rem;
         text-align: center;
     }
     .app-header h1 {
-        font-size: 1.4rem;
-        line-height: 1.3;
-        padding-right: 0;
+        font-size: 1.3rem;
+        line-height: 1.25;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
     }
     .app-header .subtitle {
-        font-size: 0.85rem;
-        margin-top: 0.4rem;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        opacity: 0.9;
     }
 
-    /* Language toggle — move below title on mobile */
+    /* Language toggle — small pill, inline after title */
     .lang-toggle {
         position: static;
         display: inline-block;
-        margin-top: 0.75rem;
-        font-size: 0.85rem;
-        padding: 0.35rem 0.9rem;
+        margin-top: 0.6rem;
+        font-size: 0.78rem;
+        padding: 0.28rem 0.75rem;
+        border-radius: 20px;
+    }
+
+    /* Demo badge */
+    #demo-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        margin-top: 0.4rem;
     }
 
     /* Container */
     .container {
         margin-top: -1.5rem;
-        padding: 0 0.75rem 2rem;
+        padding: 0 0.6rem 2rem;
     }
 
     /* Cards */
     .card {
-        padding: 1.25rem 1rem;
-        border-radius: 16px;
-        margin-bottom: 1rem;
+        padding: 1.1rem 0.9rem;
+        border-radius: 14px;
+        margin-bottom: 0.85rem;
     }
     .card h2 {
-        font-size: 1.15rem;
+        font-size: 1.1rem;
+        margin-bottom: 0.6rem;
     }
 
-    /* Inputs — 16px prevents iOS auto-zoom */
+    /* Disclaimer note inside first card */
+    .disclaimer-note {
+        font-size: 0.75rem;
+        padding: 0.6rem 0.8rem;
+        line-height: 1.4;
+    }
+
+    /* Inputs — 16px prevents iOS auto-zoom on focus */
     input[type="text"],
     input[type="number"] {
         font-size: 16px;
-        padding: 0.7rem 0.9rem;
+        padding: 0.65rem 0.85rem;
     }
 
-    /* Buttons — full width, stacked */
+    /* Buttons */
     button {
         width: 100%;
-        font-size: 0.95rem;
-        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        padding: 0.7rem 0.9rem;
+        border-radius: 10px;
     }
     .btn-group {
         flex-direction: column;
-        gap: 0.6rem;
+        gap: 0.5rem;
     }
 
     /* Voting method buttons */
     .method-btn {
         text-align: left;
-        padding: 0.9rem 1rem;
+        padding: 0.85rem 0.9rem;
+    }
+    .method-btn strong {
+        font-size: 0.95rem;
     }
     .method-btn .helper-text {
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         margin-top: 0.3rem;
         display: block;
+        line-height: 1.4;
     }
 
-    /* Autocomplete — bigger touch targets */
+    /* Autocomplete — 44px min touch targets */
     .autocomplete-items div {
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
+        padding: 0.7rem 0.9rem;
+        font-size: 0.95rem;
         min-height: 44px;
+        display: flex;
+        align-items: center;
     }
 
     /* Progress bar */
-    .progress-container {
-        margin: 0.5rem 0 1rem;
-    }
-    .progress-text {
-        font-size: 0.85rem;
-    }
+    .progress-container { margin: 0.4rem 0 0.8rem; }
+    .progress-text { font-size: 0.8rem; }
 
     /* Candidate grid — single column */
-    .candidate-grid {
-        grid-template-columns: 1fr;
-    }
+    .candidate-grid { grid-template-columns: 1fr; gap: 0.6rem; }
 
     /* Checklist */
-    .checklist li {
-        font-size: 0.9rem;
-        padding: 0.5rem 0;
-    }
+    .checklist li { font-size: 0.88rem; padding: 0.45rem 0; }
 
-    /* AI response box */
-    .ai-response-box {
-        padding: 1rem;
-    }
-    .ai-response-text {
-        font-size: 0.92rem;
-    }
+    /* AI section */
+    .ai-response-box { padding: 0.9rem; }
+    .ai-response-header { font-size: 0.88rem; }
+    .ai-response-text { font-size: 0.88rem; line-height: 1.65; }
+    .ai-disclaimer { font-size: 0.72rem; }
 
     /* Map */
-    .map-container iframe {
-        height: 220px;
-    }
-
-    /* Badge */
-    .badge {
-        font-size: 0.75rem;
-        padding: 0.3rem 0.6rem;
-    }
-
-    /* Demo badge */
-    #demo-badge {
-        font-size: 0.72rem;
-        margin-top: 0.5rem;
-    }
+    .map-container iframe { height: 200px; }
 
     /* Toast */
     .toast {
-        width: 90%;
+        width: 92%;
         white-space: normal;
         text-align: center;
-        font-size: 0.85rem;
+        font-size: 0.82rem;
     }
 
-    /* Start over — not full width, centered */
+    /* Start over button — centered, not full width */
     #btnFinalReset {
-        max-width: 200px;
+        max-width: 180px;
         margin: 0 auto;
         display: block;
+        width: auto;
     }
 }
 
-/* Extra small (< 380px) */
-@media (max-width: 380px) {
-    .app-header h1 { font-size: 1.2rem; }
-    .card { padding: 1rem 0.85rem; }
-    button { font-size: 0.88rem; }
+/* Extra small phones (< 375px) */
+@media (max-width: 375px) {
+    .app-header h1 { font-size: 1.15rem; }
+    .app-header { padding: 0.85rem 0.85rem 2.2rem; }
+    .card { padding: 0.9rem 0.75rem; }
+    .card h2 { font-size: 1rem; }
+    button { font-size: 0.85rem; padding: 0.65rem 0.8rem; }
 }
 
