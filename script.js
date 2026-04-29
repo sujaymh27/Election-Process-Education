@@ -1,3 +1,6 @@
+'use strict';
+// ─── script.js — Main Application Logic ─────────────────────────────────────
+
 const fallbackData = {
   "electionInfo": {
     "location": "Karnataka, India",
@@ -360,26 +363,53 @@ async function init() {
     renderCurrentStep();
 }
 
-// State Persistence
+// ─── State Persistence ───────────────────────────────────────────────────────
+
+/**
+ * Persist current user state to localStorage.
+ * Skips save for users under 18 to respect privacy.
+ */
 function saveState() {
-    // Don't save if under 18 (as per privacy/flow)
     if (userState.age && userState.age < 18) return;
-    localStorage.setItem('electionUserState', JSON.stringify(userState));
+    try {
+        localStorage.setItem('electionUserState', JSON.stringify(userState));
+    } catch (e) {
+        console.warn('[saveState] Could not persist state:', e.message);
+    }
     updateScore();
 }
 
+/**
+ * Restore user state from localStorage if available.
+ * Falls back gracefully if storage is unavailable or data is corrupt.
+ */
 function loadState() {
-    const saved = localStorage.getItem('electionUserState');
-    if (saved) {
-        userState = JSON.parse(saved);
-        if(userState.name) {
-            userState.currentStep = 'welcome_back';
+    try {
+        const saved = localStorage.getItem('electionUserState');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && typeof parsed === 'object') {
+                userState = parsed;
+                if (userState.name) {
+                    userState.currentStep = 'welcome_back';
+                }
+            }
         }
+    } catch (e) {
+        console.warn('[loadState] Could not restore state:', e.message);
+        localStorage.removeItem('electionUserState');
     }
 }
 
+/**
+ * Reset all user state and re-render the intro step.
+ */
 function clearState() {
-    localStorage.removeItem('electionUserState');
+    try {
+        localStorage.removeItem('electionUserState');
+    } catch (e) {
+        console.warn('[clearState] Could not clear storage:', e.message);
+    }
     userState = { name: '', age: null, registered: null, votingMethod: null, constituency: null, score: 0, currentStep: 'intro' };
     progressContainer.style.display = 'none';
     renderCurrentStep();
@@ -741,12 +771,7 @@ function renderConstituency() {
     input.addEventListener('input', handleAutocomplete);
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('btnSearch').click(); });
 
-    // Placeholder so the old loop below doesn't re-run
-    if (false) { const val = '';
-        autocompleteList.innerHTML = '';
-        if (!val) { return false; }
-        
-        } // end if(false) placeholder
+    // Autocomplete is handled by the debounced handler above.
 
     // Close autocomplete if clicked outside
     document.addEventListener('click', function (e) {
@@ -837,11 +862,14 @@ function renderDashboard() {
         </div>
     `;
     
-    // Add to Calendar Button (simulated URL)
-    const eventTitle = encodeURIComponent("Election Day!");
-    const eventDetails = encodeURIComponent("Don't forget to vote.");
-    const eventDate = "20260525T000000Z/20260525T235959Z";
-    const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${eventDate}&details=${eventDetails}`;
+    // Add to Calendar Button — dates derived dynamically from election data
+    const calEventTitle   = encodeURIComponent('Election Day - Vote for Karnataka!');
+    const calEventDetails = encodeURIComponent("Don't forget to vote. Check nvsp.in for your polling booth.");
+    const electionDayRaw  = electionData.electionInfo.timeline.electionDay;
+    const calDate         = new Date(electionDayRaw);
+    const pad = (n) => String(n).padStart(2, '0');
+    const calDateStr = `${calDate.getUTCFullYear()}${pad(calDate.getUTCMonth() + 1)}${pad(calDate.getUTCDate())}`;
+    const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${calEventTitle}&dates=${calDateStr}T000000Z/${calDateStr}T235959Z&details=${calEventDetails}`;
     
     timelineHtml += `
         <a href="${calUrl}" target="_blank" style="text-decoration: none;">
@@ -998,7 +1026,13 @@ function renderAISection() {
     });
 }
 
-// Helpers
+// ─── Helper Functions ────────────────────────────────────────────────────────
+
+/**
+ * Format an ISO date string into a human-readable Indian locale date.
+ * @param {string|Date|null|undefined} dateString - ISO date or Date object
+ * @returns {string} Formatted date (e.g. "25 May 2026") or a fallback message
+ */
 function formatDate(dateString) {
     if (dateString === null || dateString === undefined) return 'Date not available';
     const d = new Date(dateString);
@@ -1006,7 +1040,7 @@ function formatDate(dateString) {
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 // Expose for unit testing
-window.formatDate = formatDate;
+window.formatDate   = formatDate;
 window.electionData = null; // will be set after init()
 
 function createCard(title) {
