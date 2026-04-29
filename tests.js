@@ -149,9 +149,10 @@
         assertEqual(escapeHTML(null),         '',                 'null returns empty');
         assertEqual(escapeHTML(undefined),    '',                 'undefined returns empty');
         const xss = escapeHTML('<img src=x onerror=alert(1)>');
-        assert(!xss.includes('<img'),         'XSS img tag neutralised');
-        assert(!xss.includes('onerror'),      'XSS onerror neutralised');
-        assertEqual(escapeHTML(42),           '42',              'number coerced to string');
+        assert(!xss.includes('<img'),          'XSS img tag neutralised (no raw <img)');
+        assert(!xss.includes('<'),             'no unescaped < in output');
+        assert(xss.includes('&lt;'),           'angle brackets replaced with HTML entities');
+        assertEqual(escapeHTML(42),            '42',              'number coerced to string');
     }
     console.groupEnd();
 
