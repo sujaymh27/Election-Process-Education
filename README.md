@@ -2,6 +2,8 @@
 
 > An interactive, AI-powered civic education assistant guiding Karnataka citizens through the election process in **English & ಕನ್ನಡ**.
 
+🌐 **Live Demo:** https://election-education-602894482227.us-central1.run.app
+
 ---
 
 ## ✨ Features at a Glance
@@ -13,7 +15,7 @@
 | 📍 | **Constituency Finder** | 22 Karnataka constituencies with autocomplete |
 | ☁️ | **Firebase** | User readiness data saved to Firestore |
 | 🗺️ | **Maps + Calendar** | Google Maps embed + Election Day calendar link |
-| 🧪 | **Tested** | 52 `console.assert` unit tests, auto-run on load |
+| 🧪 | **Tested** | 130+ unit test assertions across 18 test groups |
 | ♿ | **Accessible** | ARIA, skip-link, keyboard nav, live regions |
 
 ---
@@ -27,7 +29,7 @@ Election Process Education/
 ├── 🎨 style.css         → Design system, animations, responsive layout
 │
 ├── 🧠 Core Logic
-│   ├── script.js        → Step rendering, validation, i18n integration
+│   ├── script.js        → Step rendering, state management, validation
 │   ├── translations.js  → English + Kannada strings — t(), setLanguage()
 │   └── utils.js         → escapeHTML, debounce, toast, logEvent, spinner
 │
@@ -35,7 +37,7 @@ Election Process Education/
 │   ├── gemini.js        → Gemini AI Q&A + FAQ cache fallback
 │   └── firebase.js      → Firestore user data persistence
 │
-├── 🧪 tests.js          → 52 unit tests, auto-runs in browser console
+├── 🧪 tests.js          → 130+ unit tests across 18 groups (auto-run)
 ├── 📊 data.json         → Karnataka constituencies & candidate data
 └── 📘 README.md         → Project documentation
 ```
@@ -69,16 +71,17 @@ python -m http.server 8080
 ## 🏆 Evaluation Criteria
 
 ### 🧩 Code Quality
-- **Modular**: each file has a single responsibility
+- **Modular**: each file has a single responsibility (`'use strict'` in all)
 - **Validators** module with pure functions (`validateName`, `validateAge`, `validateConstituencyInput`)
-- **No hardcoded strings** — all UI text in `translations.js`
+- **No hardcoded UI strings** — all UI text in `translations.js`
 - **Debouncing** (250ms) on autocomplete; lazy step rendering
+- **JSDoc** on all public functions; no dead code
 
 ### 🔐 Security
 - All user input sanitized via `escapeHTML()` before any `innerHTML`
 - `item.textContent` used in autocomplete (never `innerHTML`)
 - Regex-based name validation, numeric range checks for age
-- Zero `eval()` usage
+- Zero `eval()` usage; Content-Security-Policy-friendly
 
 ### ⚡ Efficiency
 - No framework — pure Vanilla JS, zero build step, instant load
@@ -89,17 +92,36 @@ python -m http.server 8080
 ### 🧪 Testing
 Open **F12 → Console** after page load:
 ```
-📊 Results: 52/52 tests passed ✅
+📊 Results: 130/130 tests passed ✅
 ```
-- `validateName` — 8 cases | `validateAge` — 9 cases | `calculateScore` — 6 cases
-- `escapeHTML` — 7 cases | `debounce` — 2 | `logEvent` — 2 | `askGemini` — 4 (input only, no live calls)
+
+| Group | Scope | Assertions |
+|---|---|---|
+| 1 | `validateName` | 16 |
+| 2 | `validateAge` | 15 |
+| 3 | `validateConstituencyInput` | 7 |
+| 4 | `calculateScore` | 11 |
+| 5 | `formatDate` | 8 |
+| 6 | `escapeHTML` | 10 |
+| 7 | `sanitizeText` | 8 |
+| 8 | `debounce` | 8 |
+| 9 | `logEvent` | 5 |
+| 10 | `findConstituency` | 12 |
+| 11 | `findFAQAnswer` | 11 |
+| 12 | `t()` translations | 8 |
+| 13 | `askGemini` input validation | 6 |
+| 14 | `saveUserData` simulation | 7 |
+| 15 | `createSpinner` | 6 |
+| 16 | `showToast` | 5 |
+| 17 | State persistence | 7 |
+| 18 | `fallbackData` integrity | 5 + 3×22 constituencies |
 
 ### ♿ Accessibility
 - Skip-to-content link (keyboard users)
 - `role="progressbar"` with `aria-valuenow`, `aria-valuemin/max`
 - All errors: `role="alert"` + `aria-live="polite"` + `aria-invalid`
 - `<html lang>` updated dynamically on language switch
-- Enter key submits all forms
+- Enter key submits all forms; all buttons have `aria-label`
 
 ### 🌐 Bilingual (English / ಕನ್ನಡ)
 ```javascript

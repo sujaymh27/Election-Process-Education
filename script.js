@@ -283,6 +283,12 @@ const Validators = {
 // Expose Validators globally for tests.js
 window.Validators = Validators;
 
+// Expose state helpers globally for tests.js and translations.js
+window.saveState  = saveState;
+window.loadState  = loadState;
+window.clearState = clearState;
+window.renderCurrentStep = renderCurrentStep;
+
 // ─── Exposed Utilities for Testing ───────────────────────────────────────────
 /**
  * Pure score calculation — exposed for unit testing.
